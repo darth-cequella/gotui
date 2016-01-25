@@ -1,50 +1,54 @@
 package main
 
 import (
-	"os"
-	"syscall"
-	"unsafe"
 	"fmt"
+	"log"
+	"os"
+    "os/exec"
+    "os/signal"
+    "syscall"
 	
 	"gotui/widget"
+	"gotui/base"
 )
 
-const (
-    _TIOCGWINSZ = 0x5413 // On OSX use 1074295912. Thanks zeebo
-)
-
-type WINSIZE struct {
-    Row    uint16
-    Col    uint16
-    Xpixel uint16
-    Ypixel uint16
-}
-
-//What the fuck?
-func GetWinsize() (*WINSIZE, error) {
-    ws := new(WINSIZE)
-
-    r1, _, errno := syscall.Syscall(syscall.SYS_IOCTL,
-        uintptr(syscall.Stdin),
-        uintptr(_TIOCGWINSZ),
-        uintptr(unsafe.Pointer(ws)),
-    )
-
-    if int(r1) == -1 {
-        return nil, os.NewSyscallError("GetWinsize", errno)
-    }
-    return ws, nil
+func cleanup() {
+	fmt.Println("Ola mundo!")
+	//exec.Command("stty", "sane").Run()
 }
 
 func main() {
-	win,_ := GetWinsize()
+	screen,err := base.GetScreenCanvas()
+	if err != nil { log.Fatal(err) }
 	
-	title := "Ola mundo"
-	space := (int(win.Col) - len(title))/2
-	var test string
-	for i:=0; i<space; i++ { test+=" " }
-	test += title
-	for i:=0; i<space; i++ { test+=" " }
+	var label widget.Label
 	
-	fmt.Println( widget.Label(test, widget.NORMAL, widget.WHITE, widget.CYAN) )
+	test := base.Canvas{0,0, screen.W/2,screen.H/2}
+	
+	label.SetContent("Testando")
+	label.SetCanvas( test )
+	label.SetForeground(widget.WHITE)
+	label.SetBackground(widget.BLUE)
+	label.SetStyle(widget.BOLD)
+	
+	fmt.Println( label.Draw() )
+	
+	//------------------------------------------------------------------
+	channel := make(chan os.Signal, 1)
+    signal.Notify(channel, os.Interrupt)
+    signal.Notify(channel, syscall.SIGTERM)
+    go func() {
+        <-channel
+        cleanup()
+        os.Exit(1)
+    }()
+    
+    exec.Command("stty", "-F", "/dev/tty", "cbreak", "min", "1").Run()
+	exec.Command("stty", "-F", "/dev/tty", "-echo").Run()
+	
+	var b []byte = make([]byte, 1)
+	for {
+		os.Stdin.Read(b)
+        fmt.Println(string(b))
+	}
 }

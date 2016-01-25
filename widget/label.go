@@ -2,66 +2,87 @@ package widget
 
 import (
 	"strconv"
+	
+	"gotui/base"
 )
 
 const (
-	BLACK		=0
-	RED			=1
-	GREEN		=2
-	YELLOW		=3
-	BLUE		=4
-	MAGENTA		=5
-	CYAN		=6
-	WHITE		=7
-	DEFAULT		=9
-	
-	NORMAL 		="\033[0;"
-	BOLD		="\033[1;"
-	SOFT		="\033[2;"
-	ITALIC		="\033[3;"
-	UNDERLINE	="\033[4;"
-	INVERTED	="\033[7;"
-	INVISIBLE	="\033[8;"
-	SOMETHING	="\033[9;"
+	BLACK			=1
+	RED				=2
+	GREEN			=3
+	YELLOW			=4
+	BLUE			=5
+	MAGENTA			=6
+	CYAN			=7
+	WHITE			=8
+	DEFAULT			=10
 )
 
-func Label(text, style string, foreground, background int) (out string) {
-	//BASIC STYLE
-	styleType := style
-	
-	//FOREGROUND
-	styleType += "3"+strconv.Itoa(foreground)+";"
-	
-	//BACKGROUND
-	styleType += "4"+strconv.Itoa(background)+"m"
-	
-	out = styleType+text+"\033[0m"
-	return
+const (
+	NORMAL 			=0
+	BOLD			=1
+	SOFT			=2
+	ITALIC			=3
+	UNDERLINE		=4
+	INVERTED		=7
+	INVISIBLE		=8
+	SOMETHING		=9
+)
+
+const(
+	LEFT			=0
+	RIGHT			=1
+	CENTER			=2
+)
+
+type Label struct{
+	canvas			base.Canvas
+	content			string
+	style			int
+	foreground		int
+	background		int
+	align			int
 }
 
-func FramedLabel(text, style string, foreground, background int) (out string) {
-	//BASIC STYLE
-	styleType := style
+func (this *Label) SetCanvas (canvas base.Canvas) {
+	this.canvas = canvas
+}
+func (this *Label) SetContent(content string) {
+	this.content = content
+}
+func (this *Label) SetStyle(style int) {
+	this.style = style
+}
+func (this *Label) SetForeground(color int) {
+	this.foreground = color
+}
+func (this *Label) SetBackground(color int) {
+	this.background = color
+}
+func (this *Label) SetAlignment(align int) {
+	this.align = align
+}
+func (this *Label) Draw () string {
+	var out string
 	
-	//FOREGROUND
-	styleType += "3"+strconv.Itoa(foreground)+";"
+	//DEFAULT COLOR
+	if this.foreground == 0 { this.foreground = DEFAULT }
+	if this.background == 0 { this.background = DEFAULT }
 	
-	//BACKGROUND
-	styleType += "4"+strconv.Itoa(background)+"m"
+	//DEFINE POSITION
+	out = "\033["+strconv.Itoa(int(this.canvas.X))+";"+strconv.Itoa(int(this.canvas.Y))+"H"
 	
-	out = styleType
-	out += "\u256D" //CORNER LEFT-TOP
-	for i:=0; i<len(text);i++ {
-		out += "\u2500" //TOP
-	}
-	out += "\u256E\n" //CORNER RIGHT-TOP
-	out += "\u2502"+text+"\u2502\n" //LEFT TEXT RIGHT
-	out += "\u2570" //CORNER LEFT-BOTTOM
-	for i:=0; i<len(text);i++ {
-		out += "\u2500" //BOTTOM
-	}
-	out += "\u256F" //CORNER RIGHT-BOTTOM
-	out += "\033[0m\n"
+	//DEFINE STYLE
+	out += "\033["
+	out += strconv.Itoa(this.style)+";"
+	out += "3"+strconv.Itoa(this.foreground-1)+";"
+	out += "4"+strconv.Itoa(this.background-1)+"m"
 	
-	return
+	//SET CONTENT
+	out += this.content
+	
+	//UNDEFINE STYLE
+	out += "\033[0m"
+	
+	return out
 }
