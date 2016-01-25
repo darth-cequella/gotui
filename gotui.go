@@ -19,7 +19,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%s\n", out.String())
+	fmt.Printf("%s \n", out.String())
 	
 	//fmt.Println( widget.FramedLabel("Ola mundo", widget.NORMAL, widget.WHITE, widget.CYAN) )
 }
