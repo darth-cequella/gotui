@@ -1,4 +1,4 @@
-package main
+package gotui
 
 import (
 	"fmt"
@@ -9,24 +9,21 @@ import (
     "syscall"
 )
 
-func cleanup() {
+func Stop() {
 	err := exec.Command("stty", "-F", "/dev/tty", "sane").Run()
 	
 	if err != nil{
-		fmt.Println("Não executou")
 		log.Fatal(err)
 	}
-	
-	fmt.Println("Ola mundo!")
 }
 
-func main() {
+func Start() {
 	channel := make(chan os.Signal, 1)
     signal.Notify(channel, os.Interrupt)
     signal.Notify(channel, syscall.SIGTERM)
     go func() {
         <-channel
-        cleanup()
+        Stop()
         os.Exit(1)
     }()
     
